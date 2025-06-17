@@ -10,16 +10,24 @@
 #include "settings.h"
 
 typedef enum {
+    SERVER_MSG_PLAYER_ID_SET,
     SERVER_MSG_PLAYER_ENTERED,
     SERVER_MSG_NOT_ENOUGH_PLAYERS,
     SERVER_MSG_GAME_START,
+    SERVER_MSG_PLAYER_POSITION,
 } server_message_type;
+
+typedef struct player_posititon_message {
+    int player_id;
+    vec2 pos;
+} player_posititon_message_t;
 
 typedef struct server_message {
     server_message_type type;
     int client_id;
     union {
-        vec2 position;
+        player_posititon_message_t player_pos_msg;
+        vec2 pos;
         int player_id;
         int needed_players;
     } data;

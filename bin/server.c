@@ -5,9 +5,12 @@
 #include "client.h"
 #include "settings.h"
 #include "state.h"
+#include "types.h"
 
 // TODO: remove global state
-server_state_t g_State = {};
+server_state_t g_State = {
+    .is_game_running = 0,
+};
 
 static void *handle_client(void *arg);
 
@@ -25,7 +28,30 @@ int main(void) {
 
     sr_start_listen(server);
 
-    while (1);
+    server_message_t srv_msg;
+
+    while (1) {
+        if (!g_State.is_game_running) {
+            continue;
+        }
+
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            server_player_t *player = &g_State.players[i];
+
+            if (i + 1 > (int)server->client_count) {
+                continue;
+            }
+
+            srv_msg = (server_message_t){
+                .type = SERVER_MSG_PLAYER_POSITION,
+                .data.player_pos_msg.player_id = i,
+                .data.player_pos_msg.pos = player->pos,
+            };
+
+            LOG_INFO("Sending player: %d position to clients", i);
+            sr_send_message_to_all_except(server, i, &srv_msg);
+        }
+    }
 
     fclose(log_file);
     return 0;
@@ -38,13 +64,21 @@ void *handle_client(void *arg) {
 
     LOG_INFO("Client %d connected from %s", con->client_id, inet_ntoa(con->addr.sin_addr));
 
-    server_message_t srv_msg = {
+    LOG_INFO("Sending player set player id message");
+    server_message_t srv_msg = (server_message_t){
+        .type = SERVER_MSG_PLAYER_ID_SET,
+        .data.player_id = con->client_id,
+    };
+
+    srv_msg = (server_message_t){
         .type = SERVER_MSG_PLAYER_ENTERED,
         .data.player_id = con->client_id,
     };
 
     LOG_INFO("Sending player entered message");
-    sr_send_message_to_all_except(server, con->client_id, &srv_msg);
+    sr_send_message_to_client(server, con->client_id, &srv_msg);
+
+    g_State.players[con->client_id].pos = SCREEN_CENTER;
 
     if (server->client_count < PLAYERS_TO_START) {
         LOG_INFO("Clients count: %d", server->client_count);
@@ -57,13 +91,14 @@ void *handle_client(void *arg) {
 
         sr_send_message_to_all(server, &srv_msg);
     } else {
-        LOG_INFO("Sending game start message");
-
         srv_msg = (server_message_t){
             .type = SERVER_MSG_GAME_START,
         };
 
+        LOG_INFO("Sending game start message");
         sr_send_message_to_all(server, &srv_msg);
+
+        g_State.is_game_running = 1;
     }
 
     while (con->active) {
@@ -77,11 +112,10 @@ void *handle_client(void *arg) {
 
         if (bytes_read == sizeof(client_message_t)) {
             switch (cl_msg.type) {
-                /*
+                    // TODO: receive player position from client and set
+                    // g_State.players[con->id].position = pos it will automaticly get replicated
+                    // (that logic is in main while loop inside main function)
 
-                Fill in
-
-                */
                 default: {
                     LOG_ERROR(
                         "Unknown message type %d from client %d\n", cl_msg.type, con->client_id

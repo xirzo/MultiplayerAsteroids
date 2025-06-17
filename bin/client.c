@@ -15,6 +15,7 @@ int main(void) {
         .is_running = 1,
         .is_connected = 0,
         .is_game_running = 0,
+        .player_id = -1,
     };
 
     LOG_INFO("Connecting to server");
@@ -56,6 +57,11 @@ void receive_server_message(client_state_t *state) {
     }
 
     switch (msg.type) {
+        case SERVER_MSG_PLAYER_ID_SET: {
+            LOG_INFO("Setting player id: %d", msg.data.player_id);
+            state->player_id = msg.data.player_id;
+            break;
+        }
         case SERVER_MSG_PLAYER_ENTERED: {
             LOG_INFO("Another player entered with player id: %d", msg.data.player_id);
             break;
@@ -69,6 +75,28 @@ void receive_server_message(client_state_t *state) {
         case SERVER_MSG_GAME_START: {
             LOG_INFO("Game start");
             state->is_game_running = 1;
+            break;
+        }
+        case SERVER_MSG_PLAYER_POSITION: {
+            player_posititon_message_t *pos_msg = &msg.data.player_pos_msg;
+
+            if (pos_msg->player_id == state->player_id) {
+                // TODO: set player initial positon
+
+                LOG_INFO(
+                    "TODO: IMPLEMENT | Set initial player position: x: %.1f, y: %.1f",
+                    pos_msg->pos.x,
+                    pos_msg->pos.y
+                );
+                break;
+            }
+
+            LOG_INFO(
+                "TODO: IMPLEMENT | Received player: %d position: x: %.1f, y: %.1f",
+                pos_msg->player_id,
+                pos_msg->pos.x,
+                pos_msg->pos.y
+            );
             break;
         }
         default: {
