@@ -16,8 +16,8 @@ typedef enum {
 typedef struct server_message {
     server_message_type type;
     int client_id;
-    unsigned int timestamp;
     union {
+        int player_id;
         vec2 position;
     } data;
 } server_message_t;

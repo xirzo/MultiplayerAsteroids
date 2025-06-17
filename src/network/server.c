@@ -9,7 +9,7 @@ server_t *sr_create_server(unsigned short port, void *(*handle_client_callback)(
     server_t *server = malloc(sizeof(server_t));
 
     if (!server) {
-        LOG_ERROR("SERVER ERROR: failed to allocate memory for server: %s", strerror(errno));
+        LOG_ERROR("Failed to allocate memory for server: %s", strerror(errno));
         return NULL;
     }
 
@@ -17,7 +17,7 @@ server_t *sr_create_server(unsigned short port, void *(*handle_client_callback)(
     bzero(&server->servaddr, sizeof(server->servaddr));
 
     if ((server->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        LOG_ERROR("SERVER ERROR: socket creation failed: %s", strerror(errno));
+        LOG_ERROR("Socket creation failed: %s", strerror(errno));
         free(server);
         return NULL;
     }
@@ -29,7 +29,7 @@ server_t *sr_create_server(unsigned short port, void *(*handle_client_callback)(
 
     int optval = 1;
     if (setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int)) < 0) {
-        LOG_ERROR("SERVER ERROR: setsockopt failed: %s", strerror(errno));
+        LOG_ERROR("Setsockopt failed: %s", strerror(errno));
         close(server->fd);
         free(server);
         return NULL;
@@ -37,7 +37,7 @@ server_t *sr_create_server(unsigned short port, void *(*handle_client_callback)(
 
     if (bind(server->fd, (const struct sockaddr *)&server->servaddr, sizeof(server->servaddr))
         < 0) {
-        LOG_ERROR("SERVER ERROR: bind failed: %s", strerror(errno));
+        LOG_ERROR("Bind failed: %s", strerror(errno));
         close(server->fd);
         free(server);
         return NULL;
@@ -45,32 +45,30 @@ server_t *sr_create_server(unsigned short port, void *(*handle_client_callback)(
 
     server->client_count = 0;
     if (pthread_mutex_init(&server->clients_mutex, NULL) != 0) {
-        LOG_ERROR("SERVER ERROR: mutex init failed: %s", strerror(errno));
+        LOG_ERROR("Mutex init failed: %s", strerror(errno));
         close(server->fd);
         free(server);
         return NULL;
     }
 
-    for (size_t i = 0; i < MAX_PLAYERS; i++) {
-        server->clients[i].active = 0;
-    }
+    for (size_t i = 0; i < MAX_PLAYERS; i++) { server->clients[i].active = 0; }
 
-    LOG_INFO("SERVER: initialized successfully on port %d", port);
+    LOG_INFO("Initialized successfully on port %d", port);
     return server;
 }
 
 void sr_destroy_server(server_t *server) {
     if (!server) {
-        LOG_WARNING("SERVER WARNING: attempt to destroy NULL server");
+        LOG_WARNING("Attempt to destroy NULL server");
         return;
     }
 
-    LOG_INFO("SERVER: shutting down...");
+    LOG_INFO("Shutting down...");
 
     pthread_mutex_lock(&server->clients_mutex);
     for (size_t i = 0; i < server->client_count; i++) {
         if (server->clients[i].active) {
-            LOG_INFO("SERVER: disconnecting client %d", server->clients[i].client_id);
+            LOG_INFO("Disconnecting client %d", server->clients[i].client_id);
             server->clients[i].active = 0;
             close(server->clients[i].socket_fd);
             pthread_join(server->clients[i].thread_id, NULL);
@@ -85,7 +83,7 @@ void sr_destroy_server(server_t *server) {
 
     close(server->fd);
     free(server);
-    LOG_INFO("SERVER: shutdown complete");
+    LOG_INFO("Shutdown complete");
 }
 
 void *listen_thread_func(void *arg) {
@@ -98,42 +96,42 @@ void *listen_thread_func(void *arg) {
         int client_fd = accept(server->fd, (struct sockaddr *)&client_addr, &client_len);
 
         if (client_fd < 0) {
-            LOG_ERROR("SERVER ERROR: failed to accept connection: %s", strerror(errno));
+            LOG_ERROR("Failed to accept connection: %s", strerror(errno));
             continue;
         }
 
-        LOG_INFO("SERVER: new connection from %s", inet_ntoa(client_addr.sin_addr));
+        LOG_INFO("New connection from %s", inet_ntoa(client_addr.sin_addr));
 
         int client_id = sr_add_client(server, client_fd, client_addr);
 
         if (client_id < 0) {
-            LOG_ERROR("SERVER ERROR: failed to add client (server full or error)");
+            LOG_ERROR("Failed to add client (server full or error)");
             close(client_fd);
             continue;
         }
 
-        LOG_INFO("SERVER: added client with ID %d", client_id);
+        LOG_INFO("Added client with ID %d", client_id);
     }
     return NULL;
 }
 
 void sr_start_listen(server_t *server) {
     if (listen(server->fd, MAX_PLAYERS) < 0) {
-        LOG_ERROR("SERVER ERROR: failed listening: %s", strerror(errno));
+        LOG_ERROR("Failed listening: %s", strerror(errno));
         return;
     }
 
-    LOG_INFO("SERVER: listening on port %d...", ntohs(server->servaddr.sin_port));
-    LOG_INFO("SERVER: waiting for connections...");
+    LOG_INFO("Listening on port %d...", ntohs(server->servaddr.sin_port));
+    LOG_INFO("Waiting for connections...");
 
     if (pthread_create(&server->server_listen_thread, NULL, listen_thread_func, server) != 0) {
-        LOG_ERROR("SERVER ERROR: failed to create listen thread: %s", strerror(errno));
+        LOG_ERROR("Failed to create listen thread: %s", strerror(errno));
     }
 }
 
 int sr_add_client(server_t *server, int socket_fd, struct sockaddr_in addr) {
     if (server->client_count >= MAX_PLAYERS) {
-        LOG_INFO("SERVER: maximum clients reached (%d)", MAX_PLAYERS);
+        LOG_INFO("Maximum clients reached (%d)", MAX_PLAYERS);
         return -1;
     }
 
@@ -153,7 +151,7 @@ int sr_add_client(server_t *server, int socket_fd, struct sockaddr_in addr) {
 
         thread_args_t *args = malloc(sizeof(thread_args_t));
         if (!args) {
-            LOG_ERROR("SERVER ERROR: failed to allocate client args");
+            LOG_ERROR("Failed to allocate client args");
             con->active = 0;
             pthread_mutex_unlock(&server->clients_mutex);
             return -1;
@@ -165,7 +163,7 @@ int sr_add_client(server_t *server, int socket_fd, struct sockaddr_in addr) {
                 &server->clients[i].thread_id, NULL, server->handle_client_callback, (void *)args
             )
             != 0) {
-            LOG_ERROR("SERVER ERROR: failed to create client thread: %s", strerror(errno));
+            LOG_ERROR("Failed to create client thread: %s", strerror(errno));
             con->active = 0;
             free(args);
             pthread_mutex_unlock(&server->clients_mutex);
@@ -188,9 +186,7 @@ void sr_send_message_to_all(server_t *server, const server_message_t *message) {
         if (server->clients[i].active) {
             if (send(server->clients[i].socket_fd, message, sizeof(server_message_t), 0) < 0) {
                 LOG_ERROR(
-                    "SERVER ERROR: failed to send to client %d: %s",
-                    server->clients[i].client_id,
-                    strerror(errno)
+                    "Failed to send to client %d: %s", server->clients[i].client_id, strerror(errno)
                 );
             }
         }
@@ -210,9 +206,7 @@ void sr_send_message_to_all_except(
         if (server->clients[i].active && server->clients[i].client_id != except_client_id) {
             if (send(server->clients[i].socket_fd, message, sizeof(server_message_t), 0) < 0) {
                 LOG_ERROR(
-                    "SERVER ERROR: failed to send to client %d: %s",
-                    server->clients[i].client_id,
-                    strerror(errno)
+                    "Failed to send to client %d: %s", server->clients[i].client_id, strerror(errno)
                 );
             }
         }
@@ -228,9 +222,7 @@ void sr_send_message_to_client(server_t *server, int client_id, const server_mes
         if (server->clients[i].active && server->clients[i].client_id == client_id) {
             if (send(server->clients[i].socket_fd, message, sizeof(server_message_t), 0) < 0) {
                 LOG_ERROR(
-                    "SERVER ERROR: failed to send to client %d: %s",
-                    server->clients[i].client_id,
-                    strerror(errno)
+                    "Failed to send to client %d: %s", server->clients[i].client_id, strerror(errno)
                 );
             }
             break;
