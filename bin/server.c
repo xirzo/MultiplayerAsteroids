@@ -3,6 +3,12 @@
 #include <logger.h>
 #include <stdlib.h>
 #include "client.h"
+#include "state.h"
+
+// TODO: remove global state
+server_state_t g_State = {
+    .players_count = 0,
+};
 
 static void *handle_client(void *arg);
 
@@ -31,17 +37,17 @@ void *handle_client(void *arg) {
     server_t *server = args->server;
     client_connection_t *con = &server->clients[args->client_index];
 
-    LOG_INFO("Client %d connected from %s\n", con->client_id, inet_ntoa(con->addr.sin_addr));
+    g_State.players_count++;
 
-    if (con->client_id == 0) {
-        server_message_t is_main_msg = {
-            .type = SERVER_MSG_PLAYER_ENTERED,
-            .client_id = con->client_id,
-            .timestamp = time(NULL),
-        };
+    LOG_INFO("Client %d connected from %s", con->client_id, inet_ntoa(con->addr.sin_addr));
 
-        sr_send_message_to_client(server, con->client_id, &is_main_msg);
-    }
+    server_message_t connection_msg = {
+        .type = SERVER_MSG_PLAYER_ENTERED,
+        .data.player_id = con->client_id,
+    };
+
+    LOG_INFO("Sending player entered message");
+    sr_send_message_to_all_except(server, con->client_id, &connection_msg);
 
     while (con->active) {
         client_message_t msg;
@@ -69,6 +75,7 @@ void *handle_client(void *arg) {
 
     close(con->socket_fd);
     con->active = 0;
+    g_State.players_count--;
 
     pthread_mutex_lock(&server->clients_mutex);
     server->client_count--;
@@ -78,4 +85,4 @@ void *handle_client(void *arg) {
     return NULL;
 }
 
-// TODO: lobby creation and enter
+// TODO: when connecting clients wait for lobby to fill
