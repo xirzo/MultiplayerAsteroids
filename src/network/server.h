@@ -10,10 +10,7 @@
 #include "settings.h"
 
 typedef enum {
-    SERVER_MSG_MARK_SET,
-    SERVER_MSG_GAME_END,
-    SERVER_MSG_ALLOW,
-    SERVER_MSG_RESTART,
+    SERVER_MSG_PLAYER_ENTERED,
 } server_message_type;
 
 typedef struct server_message {
