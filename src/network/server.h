@@ -11,14 +11,17 @@
 
 typedef enum {
     SERVER_MSG_PLAYER_ENTERED,
+    SERVER_MSG_NOT_ENOUGH_PLAYERS,
+    SERVER_MSG_GAME_START,
 } server_message_type;
 
 typedef struct server_message {
     server_message_type type;
     int client_id;
     union {
-        int player_id;
         vec2 position;
+        int player_id;
+        int needed_players;
     } data;
 } server_message_t;
 
