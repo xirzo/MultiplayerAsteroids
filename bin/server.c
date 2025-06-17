@@ -2,11 +2,11 @@
 #include <stdio.h>
 
 int main(void) {
-  FILE* log_file = fopen("server_log", "w");
-  logger_set_output_file(log_file);
+    FILE* log_file = fopen("server_log", "w");
+    logger_set_output_file(log_file);
 
-  fclose(log_file);
-  return 0;
+    fclose(log_file);
+    return 0;
 }
 
 // TODO: lobby creation and enter

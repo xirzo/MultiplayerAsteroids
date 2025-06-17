@@ -6,23 +6,23 @@
 #include "vec2.h"
 
 typedef enum {
-  CLIENT_MSG_SET_MARK,
-  CLIENT_MSG_RESTART,
+    CLIENT_MSG_SET_MARK,
+    CLIENT_MSG_RESTART,
 } client_message_type;
 
 typedef struct client_message {
-  client_message_type type;
-  int client_id;
+    client_message_type type;
+    int client_id;
 
-  union {
-    vec2 position;
-  } data;
+    union {
+        vec2 position;
+    } data;
 } client_message_t;
 
 typedef struct client {
-  int server_fd;
-  struct sockaddr_in server_addr;
-  socklen_t addr_len;
+    int server_fd;
+    struct sockaddr_in server_addr;
+    socklen_t addr_len;
 } client_t;
 
 int sr_send_message_to_server(client_t *client, const client_message_t *msg);

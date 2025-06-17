@@ -5,8 +5,8 @@
 #define VEC_2_ONE  (vec2){ .x = 1.f, .y = 1.f }
 
 typedef struct {
-  float x;
-  float y;
+    float x;
+    float y;
 } vec2;
 
 float vec2_angle(const vec2 *v, const vec2 *f);
