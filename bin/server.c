@@ -8,3 +8,5 @@ int main(void) {
   fclose(log_file);
   return 0;
 }
+
+// TODO: lobby creation and enter
