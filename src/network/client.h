@@ -6,7 +6,7 @@
 #include "vec2.h"
 
 typedef enum {
-    CLIENT_MSG_SET_MARK,
+    CLIENT_MSG_PLAYER_POSITION,
     CLIENT_MSG_RESTART,
 } client_message_type;
 

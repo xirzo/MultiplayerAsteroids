@@ -6,6 +6,7 @@
 #include "state.h"
 
 static void receive_server_message(client_state_t *state);
+static void send_server_message(client_state_t *state);
 
 int main(void) {
     FILE *log_file = fopen("client_log", "w");
@@ -31,7 +32,10 @@ int main(void) {
     while (state.is_running) {
         receive_server_message(&state);
 
-        if (!state.is_game_running) {
+        if (state.is_game_running) {
+            send_server_message(&state);
+
+            state.players[state.player_id].pos.x += 1.f;
             continue;
         }
     }
@@ -81,22 +85,20 @@ void receive_server_message(client_state_t *state) {
             player_posititon_message_t *pos_msg = &msg.data.player_pos_msg;
 
             if (pos_msg->player_id == state->player_id) {
-                // TODO: set player initial positon
-
                 LOG_INFO(
-                    "TODO: IMPLEMENT | Set initial player position: x: %.1f, y: %.1f",
-                    pos_msg->pos.x,
-                    pos_msg->pos.y
+                    "Set initial player position: x: %.1f, y: %.1f", pos_msg->pos.x, pos_msg->pos.y
                 );
+                state->players[state->player_id].pos = pos_msg->pos;
                 break;
             }
 
             LOG_INFO(
-                "TODO: IMPLEMENT | Received player: %d position: x: %.1f, y: %.1f",
+                "Received player: %d position: x: %.1f, y: %.1f",
                 pos_msg->player_id,
                 pos_msg->pos.x,
                 pos_msg->pos.y
             );
+            state->players[pos_msg->player_id].pos = pos_msg->pos;
             break;
         }
         default: {
@@ -106,4 +108,14 @@ void receive_server_message(client_state_t *state) {
     }
 }
 
+void send_server_message(client_state_t *state) {
+    client_message_t msg = { .type = CLIENT_MSG_PLAYER_POSITION,
+                             .data.position = state->players[state->player_id].pos };
+
+    LOG_ERROR("Sending position to server");
+    if ((sr_send_message_to_server(&state->client, &msg)) != 0) {
+        LOG_ERROR("Failed to send position to server");
+        return;
+    }
+}
 // TODO: ? console with events

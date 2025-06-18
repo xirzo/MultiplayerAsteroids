@@ -28,28 +28,9 @@ int main(void) {
 
     sr_start_listen(server);
 
-    server_message_t srv_msg;
-
     while (1) {
         if (!g_State.is_game_running) {
             continue;
-        }
-
-        for (int i = 0; i < MAX_PLAYERS; i++) {
-            server_player_t *player = &g_State.players[i];
-
-            if (i + 1 > (int)server->client_count) {
-                continue;
-            }
-
-            srv_msg = (server_message_t){
-                .type = SERVER_MSG_PLAYER_POSITION,
-                .data.player_pos_msg.player_id = i,
-                .data.player_pos_msg.pos = player->pos,
-            };
-
-            LOG_INFO("Sending player: %d position to clients", i);
-            sr_send_message_to_all_except(server, i, &srv_msg);
         }
     }
 
@@ -69,6 +50,7 @@ void *handle_client(void *arg) {
         .type = SERVER_MSG_PLAYER_ID_SET,
         .data.player_id = con->client_id,
     };
+    sr_send_message_to_client(server, con->client_id, &srv_msg);
 
     srv_msg = (server_message_t){
         .type = SERVER_MSG_PLAYER_ENTERED,
@@ -79,6 +61,15 @@ void *handle_client(void *arg) {
     sr_send_message_to_client(server, con->client_id, &srv_msg);
 
     g_State.players[con->client_id].pos = SCREEN_CENTER;
+
+    srv_msg = (server_message_t){
+        .type = SERVER_MSG_PLAYER_POSITION,
+        .data.player_pos_msg.player_id = con->client_id,
+        .data.player_pos_msg.pos = g_State.players[con->client_id].pos,
+    };
+
+    LOG_INFO("Sending player initial position");
+    sr_send_message_to_client(server, con->client_id, &srv_msg);
 
     if (server->client_count < PLAYERS_TO_START) {
         LOG_INFO("Clients count: %d", server->client_count);
@@ -112,9 +103,19 @@ void *handle_client(void *arg) {
 
         if (bytes_read == sizeof(client_message_t)) {
             switch (cl_msg.type) {
-                    // TODO: receive player position from client and set
-                    // g_State.players[con->id].position = pos it will automaticly get replicated
-                    // (that logic is in main while loop inside main function)
+                case CLIENT_MSG_PLAYER_POSITION: {
+                    g_State.players[con->client_id].pos = cl_msg.data.position;
+
+                    srv_msg = (server_message_t){
+                        .type = SERVER_MSG_PLAYER_POSITION,
+                        .data.player_pos_msg.player_id = con->client_id,
+                        .data.player_pos_msg.pos = g_State.players[con->client_id].pos,
+                    };
+
+                    LOG_INFO("Sending player: %d position to clients", con->client_id);
+                    sr_send_message_to_all_except(server, con->client_id, &srv_msg);
+                    break;
+                }
 
                 default: {
                     LOG_ERROR(
