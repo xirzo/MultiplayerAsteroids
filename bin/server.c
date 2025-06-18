@@ -95,6 +95,7 @@ void *handle_client(void *arg) {
 
         srv_msg = (server_message_t){
             .type = SERVER_MSG_NOT_ENOUGH_PLAYERS,
+
             .data.needed_players = PLAYERS_TO_START - server->client_count,
         };
 

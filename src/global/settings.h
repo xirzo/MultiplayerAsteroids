@@ -11,9 +11,9 @@
 
 #define SERVER_PORT      8080
 #define SERVER_IP        "127.0.0.1"
-#define PLAYERS_TO_START 2
+#define PLAYERS_TO_START 1
 #define MAX_PLAYERS      5
 
-#define PLAYER_SPEED 100.f
+#define PLAYER_SPEED 400.f
 
 #endif  // !SETTINGS_H
