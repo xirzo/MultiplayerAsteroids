@@ -50,6 +50,7 @@ void *handle_client(void *arg) {
         .type = SERVER_MSG_PLAYER_ID_SET,
         .data.player_id = con->client_id,
     };
+
     sr_send_message_to_client(server, con->client_id, &srv_msg);
 
     srv_msg = (server_message_t){
@@ -58,7 +59,7 @@ void *handle_client(void *arg) {
     };
 
     LOG_INFO("Sending player entered message");
-    sr_send_message_to_client(server, con->client_id, &srv_msg);
+    sr_send_message_to_all_except(server, con->client_id, &srv_msg);
 
     g_State.players[con->client_id].pos = SCREEN_CENTER;
 
@@ -142,3 +143,5 @@ void *handle_client(void *arg) {
 // when player enters his position should be replicated too
 
 // TODO: spawn asteroids on server
+
+// FIX: players do not see each over on connect
