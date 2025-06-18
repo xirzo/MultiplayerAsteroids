@@ -67,7 +67,7 @@ void receive_server_message(client_state_t *state) {
     } else if (res < 0) {
         LOG_INFO("Disconnecting...");
         state->is_connected = 0;
-        state->is_game_running = 0;
+        CloseWindow();
         return;
     }
 
