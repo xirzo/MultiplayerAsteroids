@@ -15,6 +15,7 @@ typedef struct client_player_t {
 
 typedef struct server_player {
     int client_id;
+    int is_active;
     vec2 pos;
 } server_player_t;
 
