@@ -9,8 +9,8 @@
 
 #define TARGET_FPS 60
 
-#define SERVER_PORT      8080
-#define SERVER_IP        "127.0.0.1"
+#define SERVER_PORT      10000
+#define SERVER_IP        "0.0.0.0"
 #define PLAYERS_TO_START 1
 #define MAX_PLAYERS      5
 

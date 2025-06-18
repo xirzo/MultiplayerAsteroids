@@ -172,3 +172,7 @@ void *handle_client(void *arg) {
 // when player enters his position should be replicated too
 
 // TODO: spawn asteroids on server
+
+// TODO: set port via env and add it to docker-compose.yml
+
+// TODO: udp server

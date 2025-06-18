@@ -1,8 +1,8 @@
 #ifndef SERVER_H
 #define SERVER_H
-
 #include "vec2.h"
 #include <netinet/in.h>
+#include <pthread.h>
 #include "settings.h"
 
 typedef enum {
