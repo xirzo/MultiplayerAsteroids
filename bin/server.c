@@ -158,6 +158,6 @@ void *handle_client(void *arg) {
 
 // TODO: spawn asteroids on server
 
-// FIX: players do not see each over on connect
-
 // FIX: still a small bug that other players inital position is not replciated on start
+
+// FIX: by some reason on second player connect there is a copy of second player in top right corner

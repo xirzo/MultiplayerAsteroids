@@ -7,6 +7,8 @@
 typedef struct client_player_t {
     vec2 pos;
     vec2 size;
+    vec2 velocity;
+    float speed;
     Color color;
     int is_active;
 } client_player_t;

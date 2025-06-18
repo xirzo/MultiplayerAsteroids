@@ -6,10 +6,12 @@
 #include "settings.h"
 #include "state.h"
 #include "types.h"
+#include "vec2.h"
 
 static void receive_server_message(client_state_t *state);
 static void send_server_message(client_state_t *state);
 
+static void process_input_and_move_player(client_state_t *state);
 static void render(client_state_t *state);
 
 int main(void) {
@@ -32,6 +34,8 @@ int main(void) {
         player->size = (vec2){ 80, 80 };
         player->color =
             (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
+        player->velocity = VEC_2_ZERO;
+        player->speed = PLAYER_SPEED;
     }
 
     LOG_INFO("Connecting to server");
@@ -56,8 +60,9 @@ int main(void) {
         receive_server_message(&state);
 
         if (state.is_game_running) {
+            process_input_and_move_player(&state);
+
             send_server_message(&state);
-            continue;
         }
 
         BeginDrawing();
@@ -149,14 +154,38 @@ void send_server_message(client_state_t *state) {
     client_message_t msg = { .type = CLIENT_MSG_PLAYER_POSITION,
                              .data.position = state->players[state->player_id].pos };
 
-    LOG_ERROR("Sending own position to server");
+    LOG_INFO("Sending own position to server");
+
     if ((sr_send_message_to_server(&state->client, &msg)) != 0) {
         LOG_ERROR("Failed to send position to server");
         return;
     }
 }
 
-static void render(client_state_t *state) {
+void process_input_and_move_player(client_state_t *state) {
+    client_player_t *player = &state->players[state->player_id];
+
+    player->velocity = VEC_2_ZERO;
+
+    if (IsKeyDown(KEY_A)) {
+        player->velocity.x = -1;
+    }
+    if (IsKeyDown(KEY_D)) {
+        player->velocity.x = 1;
+    }
+    if (IsKeyDown(KEY_W)) {
+        player->velocity.y = -1;
+    }
+    if (IsKeyDown(KEY_S)) {
+        player->velocity.y = 1;
+    }
+
+    vec2_normalize(&player->velocity);
+    vec2_multiply_scalar(&player->velocity, player->speed * GetFrameTime());
+    vec2_add(&player->pos, &player->velocity, &player->pos);
+}
+
+void render(client_state_t *state) {
     ClearBackground(BLACK);
 
     for (int i = 0; i < MAX_PLAYERS; i++) {

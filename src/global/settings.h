@@ -14,4 +14,6 @@
 #define PLAYERS_TO_START 2
 #define MAX_PLAYERS      5
 
+#define PLAYER_SPEED 100.f
+
 #endif  // !SETTINGS_H
