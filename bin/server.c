@@ -2,6 +2,8 @@
 #include <arpa/inet.h>
 #include <logger.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 #include "client.h"
 #include "settings.h"
 #include "state.h"

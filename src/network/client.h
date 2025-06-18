@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include <logger.h>
+#include <sys/socket.h>
 #include "server.h"
 #include "vec2.h"
 

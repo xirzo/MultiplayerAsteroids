@@ -1,48 +1,26 @@
 #include "client.h"
+#include <pthread.h>
 #include <logger.h>
 #include <raylib.h>
-#include <stdio.h>
-#include "server.h"
+#include <unistd.h>
+#include "render.h"
 #include "settings.h"
 #include "state.h"
 #include "types.h"
 #include "vec2.h"
+#include "core.h"
 
 static void receive_server_message(client_state_t *state);
 static void send_server_message(client_state_t *state);
 
-static void process_input_and_move_player(client_state_t *state);
-static void render(client_state_t *state);
-
 int main(void) {
-    FILE *log_file = fopen("client_log", "w");
-    // logger_set_output_file(log_file);
-
-    client_state_t state = {
-        .is_running = 1,
-        .is_connected = 0,
-        .is_game_running = 0,
-        .player_id = -1,
-    };
-
-    SetTraceLogLevel(LOG_NONE);
-
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        client_player_t *player = &state.players[i];
-
-        player->is_active = 0;
-        player->size = (vec2){ 80, 80 };
-        player->color =
-            (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
-        player->velocity = VEC_2_ZERO;
-        player->speed = PLAYER_SPEED;
-    }
+    client_state_t state = { 0 };
+    client_state_init(&state);
 
     LOG_INFO("Connecting to server");
 
     if ((sr_client_connect(&state.client, SERVER_IP, SERVER_PORT)) != 0) {
         LOG_ERROR("Failed connecting to server");
-        fclose(log_file);
         return 1;
     }
 
@@ -50,27 +28,24 @@ int main(void) {
 
     LOG_INFO("Starting raylib window");
 
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "game");
-
-    SetTargetFPS(TARGET_FPS);
+    init_window();
 
     LOG_INFO("Starting game loop");
 
-    while (!WindowShouldClose() && state.is_running) {
+    while (!WindowShouldClose()) {
         receive_server_message(&state);
 
         if (state.is_game_running) {
             process_input_and_move_player(&state);
-
             send_server_message(&state);
         }
 
         BeginDrawing();
-        render(&state);
+        ClearBackground(BLACK);
+        render_frame(&state);
         EndDrawing();
     }
 
-    fclose(log_file);
     CloseWindow();
     return 0;
 }
@@ -86,7 +61,6 @@ void receive_server_message(client_state_t *state) {
     } else if (res < 0) {
         LOG_INFO("Disconnecting...");
         state->is_connected = 0;
-        state->is_running = 0;
         state->is_game_running = 0;
         return;
     }
@@ -163,43 +137,6 @@ void send_server_message(client_state_t *state) {
     if ((sr_send_message_to_server(&state->client, &msg)) != 0) {
         LOG_ERROR("Failed to send position to server");
         return;
-    }
-}
-
-void process_input_and_move_player(client_state_t *state) {
-    client_player_t *player = &state->players[state->player_id];
-
-    player->velocity = VEC_2_ZERO;
-
-    if (IsKeyDown(KEY_A)) {
-        player->velocity.x = -1;
-    }
-    if (IsKeyDown(KEY_D)) {
-        player->velocity.x = 1;
-    }
-    if (IsKeyDown(KEY_W)) {
-        player->velocity.y = -1;
-    }
-    if (IsKeyDown(KEY_S)) {
-        player->velocity.y = 1;
-    }
-
-    vec2_normalize(&player->velocity);
-    vec2_multiply_scalar(&player->velocity, player->speed * GetFrameTime());
-    vec2_add(&player->pos, &player->velocity, &player->pos);
-}
-
-void render(client_state_t *state) {
-    ClearBackground(BLACK);
-
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        client_player_t *player = &state->players[i];
-
-        if (!player->is_active) {
-            continue;
-        }
-
-        DrawRectangle(player->pos.x, player->pos.y, player->size.x, player->size.y, player->color);
     }
 }
 

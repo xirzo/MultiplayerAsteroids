@@ -1,15 +1,21 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <raylib.h>
 #include "vec2.h"
+
+typedef struct color {
+    unsigned short r;
+    unsigned short g;
+    unsigned short b;
+    unsigned short a;
+} color_t;
 
 typedef struct client_player_t {
     vec2 pos;
     vec2 size;
     vec2 velocity;
     float speed;
-    Color color;
+    color_t color;
     int is_active;
 } client_player_t;
 

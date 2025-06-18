@@ -1,4 +1,6 @@
+add_subdirectory(core)
 add_subdirectory(global)
 add_subdirectory(math)
 add_subdirectory(network)
+add_subdirectory(render)
 add_subdirectory(state)

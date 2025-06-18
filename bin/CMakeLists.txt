@@ -1,6 +1,6 @@
 add_executable(${PROJECT_NAME} client.c)
 
-target_link_libraries(${PROJECT_NAME} logger::logger global state raylib)
+target_link_libraries(${PROJECT_NAME} core render)
 
 add_executable(asteroids_server server.c)
 

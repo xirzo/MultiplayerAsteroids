@@ -1,12 +1,13 @@
 #include "client.h"
-#include "server.h"
 
+#include <logger.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
 int sr_client_connect(client_t *client, const char *server_ip, unsigned short port) {
     if (!server_ip) {
