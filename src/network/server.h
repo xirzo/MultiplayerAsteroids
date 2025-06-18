@@ -12,6 +12,7 @@
 typedef enum {
     SERVER_MSG_PLAYER_ID_SET,
     SERVER_MSG_PLAYER_ENTERED,
+    SERVER_MSG_ACTIVE_PLAYER_IDS,
     SERVER_MSG_NOT_ENOUGH_PLAYERS,
     SERVER_MSG_GAME_START,
     SERVER_MSG_PLAYER_POSITION,
@@ -27,6 +28,7 @@ typedef struct server_message {
     int client_id;
     union {
         player_posititon_message_t player_pos_msg;
+        int active_players[MAX_PLAYERS];
         vec2 pos;
         int player_id;
         int needed_players;

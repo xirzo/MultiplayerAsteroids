@@ -2,10 +2,12 @@
 #define SETTINGS_H
 
 #define SCREEN_WIDTH       900
-#define SCREEN_HEIGHT      900
+#define SCREEN_HEIGHT      600
 #define HALF_SCREEN_WIDTH  SCREEN_WIDTH / 2.f
 #define HALF_SCREEN_HEIGHT SCREEN_HEIGHT / 2.f
 #define SCREEN_CENTER      (vec2){ HALF_SCREEN_WIDTH, HALF_SCREEN_HEIGHT };
+
+#define TARGET_FPS 60
 
 #define SERVER_PORT      8080
 #define SERVER_IP        "127.0.0.1"

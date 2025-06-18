@@ -1,12 +1,16 @@
 #include "client.h"
 #include <logger.h>
+#include <raylib.h>
 #include <stdio.h>
 #include "server.h"
 #include "settings.h"
 #include "state.h"
+#include "types.h"
 
 static void receive_server_message(client_state_t *state);
 static void send_server_message(client_state_t *state);
+
+static void render(client_state_t *state);
 
 int main(void) {
     FILE *log_file = fopen("client_log", "w");
@@ -19,6 +23,17 @@ int main(void) {
         .player_id = -1,
     };
 
+    SetTraceLogLevel(LOG_NONE);
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        client_player_t *player = &state.players[i];
+
+        player->is_active = 0;
+        player->size = (vec2){ 80, 80 };
+        player->color =
+            (Color){ GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 };
+    }
+
     LOG_INFO("Connecting to server");
 
     if ((sr_client_connect(&state.client, SERVER_IP, SERVER_PORT)) != 0) {
@@ -29,18 +44,29 @@ int main(void) {
 
     state.is_connected = 1;
 
-    while (state.is_running) {
+    LOG_INFO("Starting raylib window");
+
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "game");
+
+    SetTargetFPS(TARGET_FPS);
+
+    LOG_INFO("Starting game loop");
+
+    while (!WindowShouldClose() && state.is_running) {
         receive_server_message(&state);
 
         if (state.is_game_running) {
             send_server_message(&state);
-
-            state.players[state.player_id].pos.x += 1.f;
             continue;
         }
+
+        BeginDrawing();
+        render(&state);
+        EndDrawing();
     }
 
     fclose(log_file);
+    CloseWindow();
     return 0;
 }
 
@@ -64,10 +90,21 @@ void receive_server_message(client_state_t *state) {
         case SERVER_MSG_PLAYER_ID_SET: {
             LOG_INFO("Setting player id: %d", msg.data.player_id);
             state->player_id = msg.data.player_id;
+            state->players[state->player_id].is_active = 1;
             break;
         }
+        // TODO: similar with disconnect (set is_actve to false)
         case SERVER_MSG_PLAYER_ENTERED: {
             LOG_INFO("Another player entered with player id: %d", msg.data.player_id);
+            state->players[msg.data.player_id].is_active = 1;
+            break;
+        }
+        case SERVER_MSG_ACTIVE_PLAYER_IDS: {
+            LOG_INFO("Got active players list", msg.data.needed_players);
+
+            for (int i = 0; i < MAX_PLAYERS; i++) {
+                state->players[i].is_active = msg.data.active_players[i];
+            }
             break;
         }
         case SERVER_MSG_NOT_ENOUGH_PLAYERS: {
@@ -112,10 +149,25 @@ void send_server_message(client_state_t *state) {
     client_message_t msg = { .type = CLIENT_MSG_PLAYER_POSITION,
                              .data.position = state->players[state->player_id].pos };
 
-    LOG_ERROR("Sending position to server");
+    LOG_ERROR("Sending own position to server");
     if ((sr_send_message_to_server(&state->client, &msg)) != 0) {
         LOG_ERROR("Failed to send position to server");
         return;
     }
 }
+
+static void render(client_state_t *state) {
+    ClearBackground(BLACK);
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        client_player_t *player = &state->players[i];
+
+        if (!player->is_active) {
+            continue;
+        }
+
+        DrawRectangle(player->pos.x, player->pos.y, player->size.x, player->size.y, player->color);
+    }
+}
+
 // TODO: ? console with events

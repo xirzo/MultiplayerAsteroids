@@ -5,6 +5,7 @@ project(asteroids LANGUAGES C)
 add_compile_options(-Wunused-function -Wall -Wextra)
 
 find_package(logger REQUIRED)
+find_package(raylib REQUIRED)
 
 add_subdirectory(bin)
 add_subdirectory(src)

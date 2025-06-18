@@ -20,6 +20,8 @@ int main(void) {
 
     server_t *server = sr_create_server(SERVER_PORT, handle_client);
 
+    for (int i = 0; i < MAX_PLAYERS; i++) { g_State.players[i].client_id = -1; }
+
     if (!server) {
         LOG_ERROR("Failed to start server");
         fclose(log_file);
@@ -46,6 +48,7 @@ void *handle_client(void *arg) {
     LOG_INFO("Client %d connected from %s", con->client_id, inet_ntoa(con->addr.sin_addr));
 
     LOG_INFO("Sending player set player id message");
+
     server_message_t srv_msg = (server_message_t){
         .type = SERVER_MSG_PLAYER_ID_SET,
         .data.player_id = con->client_id,
@@ -70,6 +73,17 @@ void *handle_client(void *arg) {
     };
 
     LOG_INFO("Sending player initial position");
+    sr_send_message_to_client(server, con->client_id, &srv_msg);
+
+    srv_msg = (server_message_t){
+        .type = SERVER_MSG_ACTIVE_PLAYER_IDS,
+    };
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        srv_msg.data.active_players[i] = g_State.players[i].client_id;
+    }
+
+    LOG_INFO("Sending active player ids");
     sr_send_message_to_client(server, con->client_id, &srv_msg);
 
     if (server->client_count < PLAYERS_TO_START) {
@@ -145,3 +159,5 @@ void *handle_client(void *arg) {
 // TODO: spawn asteroids on server
 
 // FIX: players do not see each over on connect
+
+// FIX: still a small bug that other players inital position is not replciated on start
