@@ -6,5 +6,7 @@
 void init_window();
 void render_frame(client_state_t *state);
 void render_active_players(client_state_t *state);
+int should_window_close();
+void close_window();
 
 #endif  // !RENDER_H
