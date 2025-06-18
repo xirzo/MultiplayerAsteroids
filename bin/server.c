@@ -113,7 +113,7 @@ void *handle_client(void *arg) {
         ssize_t bytes_read = read(con->socket_fd, &cl_msg, sizeof(client_message_t));
 
         if (bytes_read <= 0) {
-            LOG_INFO("Client %d disconnected\n", con->client_id);
+            LOG_INFO("Client %d disconnected", con->client_id);
             break;
         }
 
@@ -143,6 +143,17 @@ void *handle_client(void *arg) {
         }
     }
 
+    LOG_INFO("Sending player: %d disconnected message", con->client_id);
+
+    srv_msg = (server_message_t){
+        .type = SERVER_MSG_PLAYER_DISCONNECT,
+        .data.player_id = con->client_id,
+    };
+
+    sr_send_message_to_all_except(server, con->client_id, &srv_msg);
+
+    g_State.players[con->client_id].is_active = 0;
+
     close(con->socket_fd);
     con->active = 0;
 
@@ -158,7 +169,3 @@ void *handle_client(void *arg) {
 // when player enters his position should be replicated too
 
 // TODO: spawn asteroids on server
-
-// FIX: still a small bug that other players inital position is not replciated on start
-
-// FIX: by some reason on second player connect there is a copy of second player in top right corner

@@ -16,6 +16,7 @@ typedef enum {
     SERVER_MSG_NOT_ENOUGH_PLAYERS,
     SERVER_MSG_GAME_START,
     SERVER_MSG_PLAYER_POSITION,
+    SERVER_MSG_PLAYER_DISCONNECT,
 } server_message_type;
 
 typedef struct player_posititon_message {

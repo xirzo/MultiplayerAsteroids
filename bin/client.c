@@ -95,10 +95,8 @@ void receive_server_message(client_state_t *state) {
         case SERVER_MSG_PLAYER_ID_SET: {
             LOG_INFO("Setting player id: %d", msg.data.player_id);
             state->player_id = msg.data.player_id;
-            // state->players[state->player_id].is_active = 1;
             break;
         }
-        // TODO: similar with disconnect (set is_actve to false)
         case SERVER_MSG_PLAYER_ENTERED: {
             LOG_INFO("Another player entered with player id: %d", msg.data.player_id);
             state->players[msg.data.player_id].is_active = 1;
@@ -108,7 +106,6 @@ void receive_server_message(client_state_t *state) {
             LOG_INFO("Got active players list", msg.data.needed_players);
 
             for (int i = 0; i < MAX_PLAYERS; i++) {
-                LOG_INFO("%d", msg.data.active_players[i]);
                 state->players[i].is_active = msg.data.active_players[i];
             }
             break;
@@ -142,6 +139,12 @@ void receive_server_message(client_state_t *state) {
                 pos_msg->pos.y
             );
             state->players[pos_msg->player_id].pos = pos_msg->pos;
+            break;
+        }
+
+        case SERVER_MSG_PLAYER_DISCONNECT: {
+            LOG_INFO("Player %d disconnected", msg.data.player_id);
+            state->players[msg.data.player_id].is_active = 0;
             break;
         }
         default: {
@@ -198,18 +201,6 @@ void render(client_state_t *state) {
 
         DrawRectangle(player->pos.x, player->pos.y, player->size.x, player->size.y, player->color);
     }
-
-    // int a = 0;
-    // for (int i = 0; i < MAX_PLAYERS; i++) {
-    //     client_player_t *player = &state->players[i];
-    //
-    //     if (player->is_active) {
-    //         a++;
-    //         continue;
-    //     }
-    // }
-    //
-    // LOG_INFO("Active: %d", a);
 }
 
 // TODO: ? console with events
